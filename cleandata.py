@@ -12,7 +12,7 @@ def data_cleaning_tool(data):
     data = standardize_data_formats(data)
 
     # Perform additional data cleaning tasks
-    # ...
+  
 
     return data
 
@@ -39,7 +39,7 @@ def standardize_data_formats(data):
     data['Amount'] = data['Amount'].str.replace('$', '')
 
     # Perform additional data format standardization
-    # ...
+   
 
     return data
 
