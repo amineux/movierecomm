@@ -1,22 +1,42 @@
 import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import linear_kernel
 
-# Load the movie ratings dataset
-ratings = pd.read_csv('ratings.csv')
+# Load movie data
+movies = pd.read_csv('movies.csv')
 
-# Compute item-item similarity matrix
-item_similarity = cosine_similarity(ratings.T)
+# Preprocess movie data
+movies['genres'] = movies['genres'].str.replace('|', ' ')
+movies['overview'] = movies['overview'].fillna('')
 
-# Function to get movie recommendations based on user input
-def get_movie_recommendations(movie_title, top_n=5):
-    movie_index = ratings.columns.get_loc(movie_title)
-    similar_movies = list(enumerate(item_similarity[movie_index]))
-    similar_movies = sorted(similar_movies, key=lambda x: x[1], reverse=True)
-    top_similar_movies = [ratings.columns[i[0]] for i in similar_movies[1:top_n+1]]
-    return top_similar_movies
+# Compute TF-IDF matrix
+tfidf = TfidfVectorizer(stop_words='english')
+tfidf_matrix = tfidf.fit_transform(movies['overview'])
 
-# Get movie recommendations for a given movie
-recommendations = get_movie_recommendations('Toy Story')
+# Compute cosine similarity matrix
+cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
 
-# Print the recommended movies
-print(recommendations)
+# Function to get movie recommendations
+def get_movie_recommendations(title, cosine_sim=cosine_sim, movies=movies):
+    # Find index of the movie
+    idx = movies[movies['title'] == title].index[0]
+    
+    # Get pairwise similarity scores
+    sim_scores = list(enumerate(cosine_sim[idx]))
+    
+    # Sort movies based on similarity scores
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    
+    # Get top 5 similar movies
+    top_movies = sim_scores[1:6]
+    
+    # Get movie titles
+    movie_indices = [i[0] for i in top_movies]
+    recommendations = movies['title'].iloc[movie_indices].values
+    
+    return recommendations
+
+# Test the recommendation system
+recommended_movies = get_movie_recommendations('Toy Story')
+print(recommended_movies)
+
